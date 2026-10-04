@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DACAL</title>
+    <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        theme: {
+                            50: 'var(--c-50)',
+                            100: 'var(--c-100)',
+                            200: 'var(--c-200)',
+                            400: 'var(--c-400)',
+                            500: 'var(--c-500)',
+                            600: 'var(--c-600)',
+                            700: 'var(--c-700)',
+                            800: 'var(--c-800)',
+                            900: 'var(--c-900)'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        :root {
+            /* Default: Stomach (Purple) */
+            --c-50: #faf5ff;
+            --c-100: #f3e8ff;
+            --c-200: #e9d5ff;
+            --c-400: #c084fc;
+            --c-500: #a855f7;
+            --c-600: #9333ea;
+            --c-700: #7e22ce;
+            --c-800: #6b21a8;
+            --c-900: #581c87;
+        }
+
+        body { 
+            background-color: var(--c-50); 
+            font-family: 'Inter', sans-serif; 
+            transition: background-color 0.3s ease;
+        }
+        
+        .tab-btn { transition: all 0.2s; }
+        .tab-active { background-color: var(--c-700); color: white; border-color: var(--c-700); }
+        .tab-inactive { background-color: white; color: var(--c-700); border-color: var(--c-200); }
+        .tab-inactive:hover { background-color: var(--c-50); }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--c-400); border-radius: 3px; transition: background 0.2s; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--c-600); }
+    </style>
+</head>
+<body class="p-4 md:p-8 text-gray-800 antialiased">
+    <div class="max-w-5xl mx-auto space-y-6">
+        <!-- Header -->
+        <div class="flex flex-col gap-2">
+            <div class="flex items-center gap-3">
+                <div class="text-xs font-bold text-theme-600 uppercase tracking-widest transition-colors duration-300">Nhóm bệnh:</div>
+                <select id="cancer-type-select" onchange="setCancerType(this.value)" class="text-xs font-bold bg-theme-100 text-theme-800 uppercase tracking-widest px-3 py-1.5 rounded-lg border-none outline-none focus:ring-2 focus:ring-theme-500 cursor-pointer shadow-sm transition-colors duration-300">
+                    <option value="stomach">Ung thư dạ dày - thực quản</option>
+                    <option value="breast">Ung thư vú (Sắp ra mắt)</option>
+                    <option value="colorectal">Ung thư đại - trực tràng (Sắp ra mắt)</option>
+                    <option value="lymphoma">Ung thư Lympho (Sắp ra mắt)</option>
+                </select>
+            </div>
+            
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mt-2">
+                <h1 id="regimen-title" class="text-3xl font-bold text-gray-900 tracking-tight">FOLFOX — Ung thư dạ dày - thực quản</h1>
+                <div class="text-left md:text-right text-xs text-gray-500 max-w-xs" id="regimen-desc-container">
+                    Theo hướng dẫn <b>Bộ Y Tế</b><br>
+                    <span id="regimen-summary" class="font-mono mt-1 block text-theme-700 opacity-80">Oxaliplatin · Calcifolinat · Biluracin (5-FU)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex flex-wrap gap-3 mt-6" id="tabs-container">
+            <!-- Rendered by JS -->
+        </div>
+
+        <!-- Table -->
+        <div class="bg-white rounded-2xl shadow-xl shadow-theme-700/10 border border-theme-100 overflow-hidden transition-shadow duration-300">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[800px]">
+                    <thead>
+                        <tr class="border-b border-theme-100 bg-theme-50 text-xs font-semibold text-theme-800 uppercase tracking-wider">
+                            <th class="p-5 w-72">Thuốc</th>
+                            <th class="p-5 w-36 text-right">Liều lượng (mg)</th>
+                            <th class="p-5 w-56 text-center">Số lọ / viên cần dùng</th>
+                            <th class="p-5">Ghi chú</th>
+                        </tr>
+                    </thead>
+                    <tbody id="drugs-table-body" class="divide-y divide-theme-50">
+                        <!-- Rendered by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- BSA & Inputs Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- BSA Display -->
+            <div class="lg:col-span-1 bg-theme-100 rounded-2xl p-6 text-center shadow-xl shadow-theme-700/10 border border-theme-200 flex flex-col justify-center transition-all duration-300">
+                <div class="text-xs font-bold text-theme-700 uppercase tracking-widest mb-2">Diện tích da (BSA)</div>
+                <div class="text-5xl font-extrabold text-theme-900 mb-2 tracking-tighter">
+                    <span id="bsa-display">0,00</span><span class="text-2xl font-bold text-theme-700 ml-1">m²</span>
+                </div>
+                <div class="text-[11px] text-theme-600 font-mono opacity-80 leading-relaxed mt-2">
+                    BSA = 0,007184 × W<sup>0.425</sup> × H<sup>0.725</sup> (Du Bois)<br>
+                    Mức liều: <span id="ratio-display">100</span>%
+                </div>
+            </div>
+
+            <!-- Inputs Card -->
+            <div class="lg:col-span-2 bg-white rounded-2xl border border-theme-100 p-6 shadow-xl shadow-theme-700/5 transition-all duration-300">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <!-- Height -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Chiều cao (H)</label>
+                        <div class="relative">
+                            <input type="number" id="input-height" value="160" class="w-full bg-gray-50 border border-theme-200 rounded-xl py-3 px-4 text-xl font-bold text-gray-900 focus:ring-2 focus:ring-theme-500 focus:border-theme-500 outline-none transition-all text-center">
+                            <span class="absolute right-4 top-3.5 text-gray-400 font-medium text-sm">cm</span>
+                        </div>
+                    </div>
+                    <!-- Weight -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Cân nặng (W)</label>
+                        <div class="relative">
+                            <input type="number" id="input-weight" value="55" class="w-full bg-gray-50 border border-theme-200 rounded-xl py-3 px-4 text-xl font-bold text-gray-900 focus:ring-2 focus:ring-theme-500 focus:border-theme-500 outline-none transition-all text-center">
+                            <span class="absolute right-4 top-3.5 text-gray-400 font-medium text-sm">kg</span>
+                        </div>
+                    </div>
+                    <!-- Ratio -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Tỷ lệ liều</label>
+                        <div class="relative mb-3">
+                            <input type="number" id="input-ratio" value="100" class="w-full bg-gray-50 border border-theme-200 rounded-xl py-3 px-4 text-xl font-bold text-gray-900 focus:ring-2 focus:ring-theme-500 focus:border-theme-500 outline-none transition-all text-center">
+                            <span class="absolute right-4 top-3.5 text-gray-400 font-medium text-sm">%</span>
+                        </div>
+                        <div class="flex flex-wrap justify-center gap-2">
+                            <button class="ratio-btn px-3 py-1.5 bg-theme-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors" data-val="100">100%</button>
+                            <button class="ratio-btn px-3 py-1.5 bg-theme-50 text-theme-800 border border-theme-200 rounded-lg text-xs font-semibold shadow-sm hover:bg-theme-100 transition-colors" data-val="90">90%</button>
+                            <button class="ratio-btn px-3 py-1.5 bg-theme-50 text-theme-800 border border-theme-200 rounded-lg text-xs font-semibold shadow-sm hover:bg-theme-100 transition-colors" data-val="85">85%</button>
+                            <button class="ratio-btn px-3 py-1.5 bg-theme-50 text-theme-800 border border-theme-200 rounded-lg text-xs font-semibold shadow-sm hover:bg-theme-100 transition-colors" data-val="80">80%</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- Footer -->
+        <div class="text-[11px] text-gray-400 leading-relaxed text-center px-4 mt-6 mb-2">
+            Số liệu ở trên là <b>ví dụ minh hoạ</b> — nhập chiều cao, cân nặng và tỷ lệ liều thực tế của bệnh nhân để tính lại.<br>
+            Công cụ chỉ hỗ trợ tính toán theo công thức đã cung cấp, không thay thế chỉ định của bác sĩ điều trị.<br>Vui lòng đối chiếu với dược sĩ lâm sàng và phác đồ hiện hành trước khi sử dụng.
+        </div>
+    </div>
+
+    <script>
+        // Database of regimens
+        const db = {
+            stomach: {
+                name: 'Ung thư dạ dày - thực quản',
+                regimens: {
+                    'FOLFOX': {
+                        name: 'FOLFOX — Ung thư dạ dày - thực quản',
+                        summary: 'Oxaliplatin · Calcifolinat · Biluracin (5-FU)',
+                        drugs: [
+                            { id: 'folfox_oxa', name: 'Oxaliplatin', dose: 85, unit: 'mg/m²', vials: [{size: 50, default: true}, {size: 100}], type: 'vial', note: 'Hoà 250 ml Glucose 5%' },
+                            { id: 'folfox_calci', name: 'Calcifolinat', dose: 300, unit: 'mg/m²', vials: [{size: 100, default: true}], type: 'vial', note: 'Hoà 250 ml Glucose 5%' },
+                            { id: 'folfox_5fu_bolus', name: 'Biluracin — bolus', dose: 400, unit: 'mg/m²', vials: [{size: 1000, default: true}], type: 'vial', note: 'Hoà 50 ml NaCl 0,9%, truyền 60 phút' },
+                            { id: 'folfox_5fu_inf', name: 'Biluracin — truyền 24h', dose: 1200, unit: 'mg/m²', vials: [{size: 1000, default: true}], type: 'vial', note: 'Hoà 500 ml NaCl 0,9%, truyền liên tục 24h' }
+                        ]
+                    },
+                    'FLOT': {
+                        name: 'FLOT — Ung thư dạ dày - thực quản',
+                        summary: 'Docetaxel · Oxaliplatin · Leucovorin · 5-FU',
+                        drugs: [
+                            { id: 'flot_doce', name: 'Docetaxel (Bestdocel)', dose: 50, unit: 'mg/m²', vials: [{size: 80, default: true}, {size: 20}], type: 'vial', note: 'Hoà 250 ml Glucose 5%, truyền ngày 1' },
+                            { id: 'flot_oxa', name: 'Oxaliplatin', dose: 85, unit: 'mg/m²', vials: [{size: 50, default: true}, {size: 100}], type: 'vial', note: 'Hoà 250 ml Glucose 5%, truyền ngày 1' },
+                            { id: 'flot_leuco', name: 'Leucovorin (Calcifolinat)', dose: 200, unit: 'mg/m²', vials: [{size: 100, default: true}], type: 'vial', note: 'Truyền tĩnh mạch ngày 1' },
+                            { id: 'flot_5fu', name: '5-FU (Biluracin)', dose: 1200, unit: 'mg/m² / ngày', vials: [{size: 1000, default: true}], type: 'vial', note: 'Hoà 500 ml NaCl 0,9%, truyền 24h — ngày 1 và ngày 2' }
+                        ]
+                    },
+                    'FOLFIRI': {
+                        name: 'FOLFIRI — Ung thư dạ dày - thực quản',
+                        summary: 'Irinotecan · Calcifolinat · Biluracin (5-FU)',
+                        drugs: [
+                            { id: 'folfiri_iri', name: 'Irinotecan (Iritero)', dose: 180, unit: 'mg/m²', vials: [{size: 40, default: true}, {size: 100}], type: 'vial', note: 'Hoà 250 ml Glucose 5%, truyền ngày 1' },
+                            { id: 'folfiri_calci', name: 'Calcifolinat (Leucovorin)', dose: 300, unit: 'mg/m²', vials: [{size: 100, default: true}], type: 'vial', note: 'Hoà 250 ml Glucose 5%' },
+                            { id: 'folfiri_5fu_bolus', name: 'Biluracin — bolus', dose: 400, unit: 'mg/m²', vials: [{size: 1000, default: true}], type: 'vial', note: 'Hoà 50 ml NaCl 0,9%, truyền 60 phút' },
+                            { id: 'folfiri_5fu_inf', name: 'Biluracin — truyền 24h', dose: 1200, unit: 'mg/m² / ngày', vials: [{size: 1000, default: true}], type: 'vial', note: 'Hoà 500 ml NaCl 0,9%, truyền 24h — ngày 1 và ngày 2' }
+                        ]
+                    },
+                    'CAPOX': {
+                        name: 'CAPOX — Ung thư dạ dày - thực quản',
+                        summary: 'Oxaliplatin · Capecitabine',
+                        drugs: [
+                            { id: 'capox_oxa', name: 'Oxaliplatin', dose: 130, unit: 'mg/m²', vials: [{size: 50, default: true}, {size: 100}], type: 'vial', note: 'Hoà 250 ml Glucose 5%, truyền ngày 1' },
+                            { id: 'capox_cape', name: 'Capecitabine (Pecabine)', dose: 2000, unit: '1000 mg/m² × 2 lần/ngày', vials: [{size: 500, default: true}], type: 'pill', note: 'Uống chia 2 lần/ngày (sáng, tối), ngày 1–14' }
+                        ]
+                    },
+                    'CAPIRI': {
+                        name: 'CAPIRI — Ung thư dạ dày - thực quản',
+                        summary: 'Irinotecan · Capecitabine',
+                        drugs: [
+                            { id: 'capiri_iri', name: 'Irinotecan (Iritero)', dose: 250, unit: 'mg/m²', vials: [{size: 40, default: true}, {size: 100}], type: 'vial', note: 'Hoà 250 ml Glucose 5%, truyền ngày 1' },
+                            { id: 'capiri_cape', name: 'Capecitabine (Pecabine)', dose: 2000, unit: '1000 mg/m² × 2 lần/ngày', vials: [{size: 500, default: true}], type: 'pill', note: 'Uống chia 2 lần/ngày (sáng, tối), ngày 1–14' }
+                        ]
+                    }
+                }
+            },
+            breast: { name: 'Ung thư vú', regimens: {} },
+            colorectal: { name: 'Ung thư đại - trực tràng', regimens: {} },
+            lymphoma: { name: 'Ung thư Lympho', regimens: {} }
+        };
+
+        // Theme configurations (Tailwind-like palettes)
+        const themes = {
+            stomach: { // Purple
+                50: '#faf5ff', 100: '#f3e8ff', 200: '#e9d5ff', 400: '#c084fc', 500: '#a855f7', 600: '#9333ea', 700: '#7e22ce', 800: '#6b21a8', 900: '#581c87'
+            },
+            breast: { // Soft Pink (hồng mịn)
+                50: '#fdf2f8', 100: '#fce7f3', 200: '#fbcfe8', 400: '#f472b6', 500: '#ec4899', 600: '#db2777', 700: '#be185d', 800: '#9d174d', 900: '#831843'
+            },
+            colorectal: { // Blue (xanh dương)
+                50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a'
+            },
+            lymphoma: { // Darker Gray (xám đậm hơn)
+                50: '#f3f4f6', 100: '#e5e7eb', 200: '#d1d5db', 400: '#9ca3af', 500: '#6b7280', 600: '#4b5563', 700: '#374151', 800: '#1f2937', 900: '#111827'
+            }
+        };
+
+        function applyTheme(type) {
+            const t = themes[type] || themes.stomach;
+            const root = document.documentElement;
+            Object.keys(t).forEach(weight => {
+                root.style.setProperty(`--c-${weight}`, t[weight]);
+            });
+        }
+
+        // State
+        let activeCancerType = 'stomach';
+        let activeTab = 'FOLFOX';
+        const selectedVials = {};
+
+        // Initialize default vials
+        for (const cType in db) {
+            for (const reg in db[cType].regimens) {
+                db[cType].regimens[reg].drugs.forEach(d => {
+                    const defVial = d.vials.find(v => v.default) || d.vials[0];
+                    selectedVials[d.id] = defVial.size;
+                });
+            }
+        }
+
+        // DOM Elements
+        const tabsContainer = document.getElementById('tabs-container');
+        const titleEl = document.getElementById('regimen-title');
+        const summaryEl = document.getElementById('regimen-summary');
+        const tableBody = document.getElementById('drugs-table-body');
+        const bsaDisplay = document.getElementById('bsa-display');
+        const ratioDisplay = document.getElementById('ratio-display');
+        const inputHeight = document.getElementById('input-height');
+        const inputWeight = document.getElementById('input-weight');
+        const inputRatio = document.getElementById('input-ratio');
+        const ratioBtns = document.querySelectorAll('.ratio-btn');
+        const descContainer = document.getElementById('regimen-desc-container');
+
+        // Helpers
+        function formatNumber(num, decimals) {
+            return Number(num).toLocaleString('vi-VN', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+        }
+
+        function calculateBSA(h, w) {
+            if (!h || !w) return 0;
+            return 0.007184 * Math.pow(w, 0.425) * Math.pow(h, 0.725);
+        }
+
+        // Functions
+        window.setCancerType = function(type) {
+            activeCancerType = type;
+            applyTheme(type);
+            const availableRegimens = Object.keys(db[type].regimens);
+            
+            if (availableRegimens.length > 0) {
+                setTab(availableRegimens[0]);
+            } else {
+                activeTab = null;
+                renderTabs();
+                renderTable();
+            }
+        }
+
+        function renderTabs() {
+            const availableRegimens = Object.keys(db[activeCancerType].regimens);
+            if (availableRegimens.length === 0) {
+                tabsContainer.innerHTML = '';
+                return;
+            }
+
+            tabsContainer.innerHTML = availableRegimens.map(name => {
+                const isActive = name === activeTab;
+                const classes = isActive ? 'tab-active font-semibold shadow-md' : 'tab-inactive border font-medium';
+                return `<button onclick="setTab('${name}')" class="px-5 py-2 rounded-full text-sm ${classes}">${name}</button>`;
+            }).join('');
+        }
+
+        window.setTab = function(name) {
+            activeTab = name;
+            
+            if (name === 'FLOT') {
+                updateRatio(90);
+            } else {
+                updateRatio(100);
+            }
+            
+            renderTabs();
+            renderTable();
+        }
+
+        window.updateVial = function(drugId, size) {
+            selectedVials[drugId] = parseInt(size);
+            renderTable();
+        }
+
+        function renderTable() {
+            const h = parseFloat(inputHeight.value) || 0;
+            const w = parseFloat(inputWeight.value) || 0;
+            const r = parseFloat(inputRatio.value) || 0;
+            const bsa = calculateBSA(h, w);
+            
+            bsaDisplay.textContent = formatNumber(bsa, 2);
+            ratioDisplay.textContent = formatNumber(r, 0);
+
+            if (!activeTab || !db[activeCancerType].regimens[activeTab]) {
+                titleEl.textContent = db[activeCancerType].name;
+                descContainer.style.display = 'none';
+                tableBody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-400 font-medium">Chưa có dữ liệu phác đồ cho loại ung thư này.<br><span class="text-xs text-gray-300 mt-2 block">(Dữ liệu đang được cập nhật)</span></td></tr>`;
+                return;
+            }
+
+            descContainer.style.display = 'block';
+            const reg = db[activeCancerType].regimens[activeTab];
+            titleEl.textContent = reg.name;
+            summaryEl.textContent = reg.summary;
+
+            tableBody.innerHTML = reg.drugs.map(drug => {
+                const totalDose = drug.dose * bsa * (r / 100);
+                const activeVialSize = selectedVials[drug.id];
+                const exactVials = totalDose / activeVialSize;
+                
+                let usageHtml = '';
+                if (drug.type === 'vial') {
+                    const openedVials = Math.ceil(exactVials);
+                    const remainder = openedVials * activeVialSize - totalDose;
+                    
+                    usageHtml = `
+                        <div class="text-xl font-bold text-theme-700">
+                            ${formatNumber(exactVials, 2)} <span class="text-sm font-normal text-theme-400">lọ</span>
+                        </div>
+                        <div class="text-[11px] text-red-600 font-semibold mt-1 bg-red-50 inline-block px-2 py-0.5 rounded">
+                            Mở ${openedVials} lọ, dư ≈ ${formatNumber(remainder, 0)} mg
+                        </div>
+                    `;
+                } else if (drug.type === 'pill') {
+                    const pills = Math.round(exactVials);
+                    usageHtml = `
+                        <div class="text-xl font-bold text-theme-700">
+                            ${formatNumber(exactVials, 2)} <span class="text-sm font-normal text-theme-400">viên</span>
+                        </div>
+                        <div class="text-[11px] text-red-600 font-semibold mt-1 bg-red-50 inline-block px-2 py-0.5 rounded">
+                            Làm tròn: ${pills} viên / ngày
+                        </div>
+                    `;
+                }
+
+                // Vial selector UI
+                const vialSelector = drug.type === 'vial' 
+                    ? `<select onchange="updateVial('${drug.id}', this.value)" class="ml-1 bg-theme-50 border border-theme-200 rounded px-1.5 py-0.5 text-[11px] font-bold text-theme-800 outline-none focus:ring-1 focus:ring-theme-500 cursor-pointer transition-colors hover:bg-theme-100">
+                        ${drug.vials.map(v => `<option value="${v.size}" ${selectedVials[drug.id] == v.size ? 'selected' : ''}>lọ ${v.size} mg</option>`).join('')}
+                       </select>`
+                    : `<span class="ml-1 bg-gray-50 border border-gray-200 rounded px-1.5 py-0.5 text-[11px] font-bold text-gray-500">viên ${activeVialSize} mg</span>`;
+
+                return `
+                    <tr class="hover:bg-theme-50 transition-colors">
+                        <td class="p-5">
+                            <div class="font-bold text-gray-900">${drug.name}</div>
+                            <div class="text-[11px] text-theme-700 opacity-80 mt-1.5 font-mono flex items-center flex-wrap gap-y-1">
+                                <span class="bg-theme-100 opacity-80 px-1.5 py-0.5 rounded">${drug.unit}</span>
+                                <span class="mx-1">·</span>
+                                ${vialSelector}
+                            </div>
+                        </td>
+                        <td class="p-5 text-right font-mono font-medium text-gray-700 text-lg">
+                            ${formatNumber(totalDose, 1)}
+                        </td>
+                        <td class="p-5 text-center">
+                            ${usageHtml}
+                        </td>
+                        <td class="p-5 text-sm text-gray-600">
+                            ${drug.note}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateRatio(val) {
+            inputRatio.value = val;
+            ratioBtns.forEach(btn => {
+                if (btn.dataset.val === val.toString()) {
+                    btn.className = "ratio-btn px-3 py-1.5 bg-theme-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors";
+                } else {
+                    btn.className = "ratio-btn px-3 py-1.5 bg-theme-50 text-theme-800 border border-theme-200 rounded-lg text-xs font-semibold shadow-sm hover:bg-theme-100 transition-colors";
+                }
+            });
+            renderTable();
+        }
+
+        inputHeight.addEventListener('input', renderTable);
+        inputWeight.addEventListener('input', renderTable);
+        inputRatio.addEventListener('input', (e) => {
+            updateRatio(e.target.value);
+        });
+
+        ratioBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                updateRatio(e.target.dataset.val);
+            });
+        });
+
+        // Khởi chạy
+        setCancerType('stomach');
+    </script>
+</body>
+</html>
